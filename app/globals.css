@@ -1,26 +1,94 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --parchment: #f6f1eb;
+  --tan: #c8a68a;
+  --soft-linen: #d7dcd3;
+  --graphite: #3a3734;
+  --faded-copper: #a78260;
+}
+
+@theme {
+  --font-orpheus: "orpheus-pro-condensed", sans-serif;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-parchment: var(--parchment);
+  --color-tan: var(--tan);
+  --color-soft-linen: var(--soft-linen);
+  --color-graphite: var(--graphite);
+  --color-faded-copper: var(--faded-copper);
+  --font-karla: var(--font-karla);
+  --font-eb-garamond: var(--font-eb-garamond);
+  --breakpoint-3xl: 1664px;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-orpheus font-normal tracking-wide;
+  }
+  h1 {
+    @apply text-4xl md:text-6xl lg:text-7xl;
+  }
+  h2 {
+    @apply text-3xl md:text-5xl xl:text-7xl;
+  }
+  h3 {
+    @apply text-2xl md:text-3xl;
+  }
+  h4 {
+    @apply text-xl md:text-2xl;
+  }
+  p {
+    @apply text-base lg:text-lg font-light;
+  }
+  strong {
+    @apply font-bold;
+  }
+  ul {
+    @apply list-disc;
+  }
+  li {
+    @apply ml-6;
   }
 }
 
+@layer components {
+  .section-container {
+    @apply 3xl:px-0 py-12 md:py-20 grid grid-cols-4 md:grid-cols-12 gap-x-4 md:gap-x-6 max-w-screen-3xl m-auto border-b border-graphite/60 border-solid;
+  }
+}
+
+/* apply a natural box layout model to all elements, but allowing components to change */
+html {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  -webkit-text-size-adjust: 100%;
+}
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--soft-linen);
+  color: var(--graphite);
+  font-family: var(--font-karla), sans-serif;
+}
+
+section {
+  @apply relative px-4 xl:px-8;
+}
+
+.line-fix {
+  @apply leading-[1.3] md:leading-[1.2] mt-[-0.2em];
 }
