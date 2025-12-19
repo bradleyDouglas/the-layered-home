@@ -6,7 +6,6 @@ import { useEffect, useRef, useState } from "react";
 import cn from "@/utils/cn";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import { useMediaQuery } from "@uidotdev/usehooks";
 import { ExpoScaleEase } from "gsap/EasePack";
 
 gsap.registerPlugin(ExpoScaleEase);
@@ -21,7 +20,28 @@ const navigation = [
 ];
 
 export default function SiteHeader() {
-  const isMobile = useMediaQuery("(max-width: 1023px)");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Only run on client side
+    const checkMobile = () => {
+      setIsMobile(window.matchMedia("(max-width: 1023px)").matches);
+    };
+
+    checkMobile();
+    const mediaQuery = window.matchMedia("(max-width: 1023px)");
+    const handleChange = () => checkMobile();
+
+    // Modern browsers
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    } else {
+      // Fallback for older browsers
+      mediaQuery.addListener(handleChange);
+      return () => mediaQuery.removeListener(handleChange);
+    }
+  }, []);
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [shouldRotate, setShouldRotate] = useState(false);
