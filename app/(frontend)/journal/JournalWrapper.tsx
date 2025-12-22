@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "next-transition-router";
 import Image from "next/image";
 import { urlFor } from "@/sanity/lib/image";
@@ -40,6 +40,7 @@ export default function JournalWrapper({ posts, tags }: JournalWrapperProps) {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Get most recent post for hero (always the first one since posts are sorted by publishedAt desc)
   const featuredPost = posts.length > 0 ? posts[0] : null;
@@ -85,10 +86,24 @@ export default function JournalWrapper({ posts, tags }: JournalWrapperProps) {
   const endIndex = startIndex + POSTS_PER_PAGE;
   const paginatedPosts = filteredAndSortedPosts.slice(startIndex, endIndex);
 
-  // Reset to page 1 when filter or sort changes
-  useMemo(() => {
+  // Remove useEffect for reset-to-page-1; instead, handle in state setters for filter & sort
+
+  // Helper setter for selectedTag that also resets page to 1
+  const handleSetSelectedTag = (tag: string | null) => {
+    setSelectedTag(tag);
     setCurrentPage(1);
-  }, [selectedTag, sortBy]);
+  };
+
+  // Lock body scroll when drawer is open (mobile only)
+  useEffect(() => {
+    if (isDrawerOpen) {
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [isDrawerOpen]);
 
   useGSAP(() => {
     gsap.from(".journal-hero", {
@@ -122,7 +137,7 @@ export default function JournalWrapper({ posts, tags }: JournalWrapperProps) {
               href={`/journal/${featuredPost.slug.current}`}
               className="col-span-full block group"
             >
-              <div className="aspect-video relative overflow-hidden w-full h-full max-h-[80vh]">
+              <div className="aspect-square md:aspect-video relative overflow-hidden w-full h-full max-h-[80vh]">
                 {featuredPost.featuredImage?.asset && (
                   <>
                     <Image
@@ -139,7 +154,7 @@ export default function JournalWrapper({ posts, tags }: JournalWrapperProps) {
                       blurDataURL={featuredPost.featuredImage.metadata?.lqip}
                       sizes="100vw"
                     />
-                    <div className="absolute top-0 left-0 w-full h-full bg-graphite/40 group-hover:bg-graphite/30 transition-colors duration-300"></div>
+                    <div className="absolute top-0 left-0 w-full h-full bg-graphite/60 group-hover:bg-graphite/50 transition-colors duration-300"></div>
                   </>
                 )}
                 <div className="absolute bottom-0 left-0 w-full p-6 md:p-12 lg:p-16">
@@ -200,12 +215,35 @@ export default function JournalWrapper({ posts, tags }: JournalWrapperProps) {
 
       {/* FILTERS AND SORT */}
       <section className="journal-filters">
-        <div className="section-container">
-          <div className="col-span-full flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            {/* Tag Filters */}
-            <div className="flex flex-wrap items-center gap-2">
+        <div className="section-container py-4 border-none">
+          <div className="col-span-full md:flex md:flex-row md:items-center md:justify-between gap-4 xl:items-start">
+            {/* Mobile Filter Button */}
+            <button
+              onClick={() => setIsDrawerOpen(true)}
+              className=" flex items-center gap-2 transition-colors duration-300"
+              aria-label="Open filters"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z"
+                />
+              </svg>
+              <span className="text-sm font-medium">Filters</span>
+            </button>
+
+            {/* Desktop Filters - Tag Filters */}
+            <div className="hidden flex-wrap items-center gap-2 w-4/5">
               <button
-                onClick={() => setSelectedTag(null)}
+                onClick={() => handleSetSelectedTag(null)}
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300",
                   selectedTag === null
@@ -218,9 +256,9 @@ export default function JournalWrapper({ posts, tags }: JournalWrapperProps) {
               {tags.map((tag) => (
                 <button
                   key={tag._id}
-                  onClick={() => setSelectedTag(tag.slug.current)}
+                  onClick={() => handleSetSelectedTag(tag.slug.current)}
                   className={cn(
-                    "px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300",
+                    "px-4 py-2 rounded-full text-xs font-medium transition-colors duration-300",
                     selectedTag === tag.slug.current
                       ? "bg-graphite text-parchment"
                       : "bg-parchment/50 text-graphite hover:bg-parchment"
@@ -231,8 +269,8 @@ export default function JournalWrapper({ posts, tags }: JournalWrapperProps) {
               ))}
             </div>
 
-            {/* Sort Dropdown */}
-            <div className="flex items-center gap-2">
+            {/* Desktop Sort Dropdown */}
+            <div className="hidden items-center gap-2">
               <label htmlFor="sort-select" className="text-sm font-medium">
                 Sort by:
               </label>
@@ -252,6 +290,120 @@ export default function JournalWrapper({ posts, tags }: JournalWrapperProps) {
         </div>
       </section>
 
+      {/* Mobile Drawer Overlay */}
+      <div
+        className={cn(
+          " fixed inset-0 z-50 transition-opacity duration-300",
+          isDrawerOpen
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
+        )}
+        onClick={() => setIsDrawerOpen(false)}
+      >
+        {/* Backdrop */}
+        <div className="absolute inset-0 bg-graphite/60 backdrop-blur-sm" />
+
+        {/* Drawer */}
+        <div
+          className={cn(
+            "absolute right-0 top-0 h-full w-full max-w-sm bg-parchment shadow-xl transform transition-transform duration-300 ease-out",
+            isDrawerOpen ? "translate-x-0" : "translate-x-full"
+          )}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex flex-col h-full">
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between p-6 border-b border-graphite/20">
+              <h3 className="text-xl font-semibold text-graphite">Filters</h3>
+              <button
+                onClick={() => setIsDrawerOpen(false)}
+                className="p-2 rounded-full hover:bg-parchment/50 transition-colors duration-200"
+                aria-label="Close filters"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Drawer Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex flex-col gap-6">
+                {/* Tag Filters */}
+                <div>
+                  <h4 className="text-sm font-semibold text-graphite mb-4">
+                    Categories
+                  </h4>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedTag(null);
+                        setIsDrawerOpen(false);
+                      }}
+                      className={cn(
+                        "px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300",
+                        selectedTag === null
+                          ? "bg-graphite text-parchment"
+                          : "bg-parchment/50 text-graphite hover:bg-parchment border border-graphite/20"
+                      )}
+                    >
+                      All
+                    </button>
+                    {tags.map((tag) => (
+                      <button
+                        key={tag._id}
+                        onClick={() => {
+                          setSelectedTag(tag.slug.current);
+                          setIsDrawerOpen(false);
+                        }}
+                        className={cn(
+                          "px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300",
+                          selectedTag === tag.slug.current
+                            ? "bg-graphite text-parchment"
+                            : "bg-parchment/50 text-graphite hover:bg-parchment border border-graphite/20"
+                        )}
+                      >
+                        {tag.title}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Sort Dropdown */}
+                <div>
+                  <h4 className="text-sm font-semibold text-graphite mb-4">
+                    Sort by
+                  </h4>
+                  <select
+                    id="sort-select-mobile"
+                    value={sortBy}
+                    onChange={(e) => {
+                      setSortBy(e.target.value as "newest" | "oldest");
+                      setIsDrawerOpen(false);
+                    }}
+                    className="w-full px-4 py-2 rounded-full bg-parchment/50 text-graphite border border-graphite/20 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-faded-copper focus:border-transparent"
+                  >
+                    <option value="newest">Newest</option>
+                    <option value="oldest">Oldest</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* BLOG POST GRID */}
       <section className="journal-grid">
         <div className="section-container">
@@ -265,7 +417,7 @@ export default function JournalWrapper({ posts, tags }: JournalWrapperProps) {
                 >
                   <div className="bg-parchment rounded-lg overflow-hidden h-full flex flex-col hover:shadow-lg transition-shadow duration-300">
                     {/* Image */}
-                    <div className="relative aspect-[4/3] overflow-hidden">
+                    <div className="relative aspect-4/3 overflow-hidden">
                       {post.featuredImage?.asset ? (
                         <>
                           <Image
@@ -295,7 +447,7 @@ export default function JournalWrapper({ posts, tags }: JournalWrapperProps) {
                     </div>
 
                     {/* Content */}
-                    <div className="p-6 flex flex-col flex-grow">
+                    <div className="p-6 flex flex-col grow">
                       <div className="text-xs text-graphite/70 mb-2">
                         {formatDate(post.publishedAt)} •{" "}
                         {calculateReadTime(post.content)} mins read
@@ -303,12 +455,12 @@ export default function JournalWrapper({ posts, tags }: JournalWrapperProps) {
                       <h3 className="text-2xl md:text-3xl mb-3 line-fix group-hover:text-faded-copper transition-colors duration-300">
                         {post.title}
                       </h3>
-                      <p className="text-sm md:text-base text-graphite/80 line-clamp-2 mb-4 flex-grow">
+                      <p className="text-sm md:text-base text-graphite/80 line-clamp-2 mb-4 grow">
                         {post.excerpt}
                       </p>
                       <div className="flex items-center gap-3">
                         {post.author.image?.asset && (
-                          <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                          <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0">
                             <Image
                               src={urlFor(post.author.image.asset).url()}
                               alt={post.author.name}

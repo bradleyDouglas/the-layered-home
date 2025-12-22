@@ -87,7 +87,7 @@ export default async function JournalPage() {
         title,
         slug
       },
-      content
+      content,
     }`,
   });
 

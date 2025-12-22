@@ -36,3 +36,4 @@ export function calculateReadTime(content: any[]): number {
   // Return at least 1 minute if there's any content
   return Math.max(1, minutes);
 }
+

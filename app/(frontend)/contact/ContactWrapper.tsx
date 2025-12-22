@@ -263,7 +263,7 @@ export default function ContactWrapper() {
                 <label className="block text-sm text-graphite/70 mb-4 font-light uppercase">
                   What service are you interested in?
                 </label>
-                <div className="space-y-3 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <div className="space-y-3 grid grid-cols-1 md:grid-cols-2 gap-0.5">
                   {servicesList.map((service) => (
                     <label
                       key={service}
